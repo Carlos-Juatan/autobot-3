@@ -1,58 +1,10 @@
-import matplotlib.pyplot as plt
-import mplcyberpunk
-plt.style.use("cyberpunk")
+
 
 from binanceAPI import BinanceAPI
 from mm_strategy import MMStrategy
+from backtester import Backtester
+from visualizer import Visualizer
 
-
-
-
-
-# Passo 6 - Gerar operações
-def generate_position(data):
-    data["posicao"] = 0
-
-    for i in range(1, len(data)):
-        if data["sinal_compra"].iloc[i] == 1:
-            data["posicao"].iloc[i] = 1
-
-        elif data["sinal_venda"].iloc[i] == 1:
-            data["posicao"].iloc[i] = 0
-
-        else:
-            if (data["posicao"].iloc[i - 1] == 1) and (data["sinal_venda"].iloc[i] == 0):
-                data["posicao"].iloc[i] = 1
-
-            else:
-                data["posicao"].iloc[i] = 0
-
-    data["posicao"] = data["posicao"].shift()
-    return data
-
-# Passo 7 - Criar um ID para todos os trades históricos na tabela
-def generate_id(data):
-    data["trades"] = (data["posicao"] != data["posicao"].shift()).cumsum()
-    data["trades"] = data["trades"].where(data["posicao"] == 1)
-    data = data.dropna(subset = "trades")
-    return data
-
-# Passo 8 - Calcular retornos de todos os trades
-def calculate_cumulative_return(data):
-    value = (1 + data["retorno"]).cumprod() - 1
-    return value
-
-def get_equity_curve(returned_metrics):
-    value = (1 + returned_metrics).cumprod() - 1
-    return value
-
-# Passo 9 - Gráfico de retornos
-def show_graphics(cumulative_return, equity_curve):
-    cumulative_return.plot(label = "Modelo")
-    equity_curve.plot(label = tickerSymbo)
-    plt.legend()
-
-    plt.show()
 
 ############### pegando dados ###########################
 
@@ -78,19 +30,23 @@ dados = strategy.generate_sell_signals()
 ############### Backtest ###########################
 
 
+backtest = Backtester(dados)
+
 # Passo 6 - Gerar operações
-dados = generate_position(dados)
+dados = backtest.generate_position()
 
 # Passo 7 - Criar um ID para todos os trades históricos na tabela
-dados = generate_id(dados)
+dados = backtest.generate_id()
 
 # Passo 8 - Calcular retornos de todos os trades
-df_retorno_acumulado = calculate_cumulative_return(dados)
-dados_retornos_completos_acum = get_equity_curve(dados_retornos_completos)
+df_retorno_acumulado = (1 + dados["retorno"]).cumprod() - 1
+dados_retornos_completos_acum = (1 + dados_retornos_completos).cumprod() - 1
 
 
 ############### visualizer ###########################
 
 
+visualizer = Visualizer()
+
 # Passo 9 - Gráfico de retornos
-show_graphics(df_retorno_acumulado, dados_retornos_completos_acum)
+visualizer.show_graphics(df_retorno_acumulado, dados_retornos_completos_acum, tickerSymbo)

@@ -1,7 +1,7 @@
 
 class MMStrategy:
     def __init__(self, data):
-        self.data = data.copy()
+        self.data = data
 
     # Passo 3 - Calcular indicadores pro modelo
     def get_returned_metrics(self):
